@@ -5,7 +5,10 @@ import subprocess
 
 from pathlib import Path
 from terminaltables import AsciiTable
-from progressbar import ProgressBar
+from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
+    FileTransferSpeed, FormatLabel, Percentage, \
+    ProgressBar, ReverseBar, RotatingMarker, \
+    SimpleProgress, Timer, AdaptiveETA, AbsoluteETA, AdaptiveTransferSpeed
 
 import config
 from utils import colorize as clrz
@@ -26,7 +29,11 @@ class Encoder(object):
             self.progress()
 
     def progress(self):
-        self.progressbar.update(int(self.status * 100))
+        if int(self.frame) > self.frames:
+            self.progressbar.update(int(self.frames))
+        else:
+            self.progressbar.update(int(self.frame))
+
 
     @property
     def filename(self):
@@ -46,7 +53,12 @@ class Encoder(object):
     def command(self):
         data = {'input': self.original, 'output': self.output}
         command_string = config.presets[self.preset]['template'].format(**data)
+        # print('command_string: {}'.format(command_string))
         return command_string
+
+    @property
+    def frames(self):
+        return int(self.duration * self.frame_rate)
 
     @property
     def resolution(self):
@@ -77,7 +89,8 @@ class Encoder(object):
     def _get_ffmpeg_info(path):
         process = subprocess.Popen([config.ffmpeg, "-i", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
-        return stdout.decode()
+        result = stdout.decode()
+        return result
 
     def _get_print_info(self):
         table_data = [
@@ -109,11 +122,14 @@ class Encoder(object):
 @click.option('--preset', default='default', help='Destination directory.')
 @click.argument('file')
 def handle(dir, preset, file):
-    click.echo('Converting {} using preset "{}"'.format(file, preset))
+    # click.echo('Converting {} using preset "{}"'.format(file, preset))
     this_encoder = Encoder(dir, preset, file)
+    print(this_encoder._get_print_info())
 
-    with ProgressBar(max_value=100) as this_encoder.progressbar:
-        print(this_encoder._get_print_info())
+    widgets = [ETA(), ' ', Timer(), Bar('>'), ' ', ' #', Counter(), ' ' , Percentage(), ' ', ReverseBar('<') ]
+    widgets = [ETA(), ' ', ' #', Counter(), ' of {}'.format(this_encoder.frames) , '  ', Percentage(), Bar('>'),  ReverseBar('<') ]
+
+    with ProgressBar(max_value=this_encoder.frames, widgets=widgets) as this_encoder.progressbar:
         this_encoder.convert()
 
 
