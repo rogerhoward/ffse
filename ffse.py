@@ -51,9 +51,9 @@ class Encoder(object):
 
     @property
     def command(self):
-        data = {'input': self.original, 'output': self.output}
-        command_string = config.presets[self.preset]['template'].format(**data)
-        # print('command_string: {}'.format(command_string))
+        data = {'in': self.original, 'out': self.output}
+        options_string = config.presets[self.preset]['template'].format(**data)
+        command_string = '{} {}'.format(config.FFMPEG_PATH, options_string)
         return command_string
 
     @property
@@ -87,7 +87,7 @@ class Encoder(object):
 
     @staticmethod
     def _get_ffmpeg_info(path):
-        process = subprocess.Popen([config.ffmpeg, "-i", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        process = subprocess.Popen([config.FFMPEG_PATH, "-i", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, _ = process.communicate()
         result = stdout.decode()
         return result
