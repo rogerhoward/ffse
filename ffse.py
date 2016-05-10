@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 import re
-import config
 import click
 import subprocess
-from pathlib import Path
 
-from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
-    FileTransferSpeed, FormatLabel, Percentage, \
-    ProgressBar, ReverseBar, RotatingMarker, \
-    SimpleProgress, Timer, AdaptiveETA, AbsoluteETA, AdaptiveTransferSpeed
+from pathlib import Path
+from terminaltables import AsciiTable
+from progressbar import ProgressBar
+
+import config
+from utils import colorize as clrz
+
 
 class Encoder(object):
-    def convert_subprocess(self):
+    def convert(self):
         process = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
         for line in process.stdout:
             line = line.strip()
@@ -37,23 +38,15 @@ class Encoder(object):
         new_filename = '{}_{}.{}'.format(original.stem, self.preset, self.extension)
         if self.destination:
             destination = Path(self.destination)
-            return destination / new_filename
+            return str(destination / new_filename)
         else:
-            return original.parent / new_filename
-
+            return str(original.parent / new_filename)
 
     @property
     def command(self):
         data = {'input': self.original, 'output': self.output}
         command_string = config.presets[self.preset]['template'].format(**data)
-        # print('command_string: {}'.format(command_string))
         return command_string
-
-    @staticmethod
-    def _get_ffmpeg_info(path):
-        process = subprocess.Popen([config.ffmpeg, "-i", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stdout, _ = process.communicate()
-        return stdout.decode()
 
     @property
     def resolution(self):
@@ -80,6 +73,25 @@ class Encoder(object):
             value = 1.0
         return value
 
+    @staticmethod
+    def _get_ffmpeg_info(path):
+        process = subprocess.Popen([config.ffmpeg, "-i", path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stdout, _ = process.communicate()
+        return stdout.decode()
+
+    def _get_print_info(self):
+        table_data = [
+            [clrz('source', 'cyan'), clrz(self.original, 'white')],
+            [clrz('output', 'cyan'), clrz(self.output, 'white')],
+            [clrz('preset', 'cyan'), clrz(self.preset, 'magenta')],
+            [clrz('duration', 'cyan'), clrz(str(self.duration), 'red')],
+            [clrz('framerate', 'cyan'), clrz(str(self.frame_rate), 'red')],
+            [clrz('frames', 'cyan'), clrz(str(int(self.duration * self.frame_rate)), 'red')],
+        ]
+        table = AsciiTable(table_data, ' FFSE - the FFS Encoder ')
+        table.inner_heading_row_border = False
+        return table.table
+
     def __init__(self, dir, preset, file):
         self.frame = 0
         self.original = file
@@ -100,12 +112,9 @@ def handle(dir, preset, file):
     click.echo('Converting {} using preset "{}"'.format(file, preset))
     this_encoder = Encoder(dir, preset, file)
 
-    print('duration: {}'.format(this_encoder.duration))
-    print('frame rate: {}'.format(this_encoder.frame_rate))
-    print('frames: {}'.format(this_encoder.duration * this_encoder.frame_rate))
-
     with ProgressBar(max_value=100) as this_encoder.progressbar:
-        this_encoder.convert_subprocess()
+        print(this_encoder._get_print_info())
+        this_encoder.convert()
 
 
 if __name__ == '__main__':
