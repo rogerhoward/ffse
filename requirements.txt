@@ -4,6 +4,7 @@ colorama==0.3.7
 colorclass==2.1.0
 progressbar2==3.6.2
 python-dateutil==2.5.3
+requests==2.10.0
 sh==1.11
 six==1.10.0
 terminaltables==2.1.0
