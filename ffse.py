@@ -150,7 +150,9 @@ class Encoder(object):
             [clrz('framerate', 'cyan'), clrz(str(self.frame_rate), 'red')],
             [clrz('frames', 'cyan'), clrz(str(int(self.duration * self.frame_rate)), 'red')],
         ]
-        table = AsciiTable(table_data, ' FFSE - the FFS Encoder ')
+
+
+        table = AsciiTable(table_data, clrz(' FFSE - the FFS Encoder ', 'yellow'))
         table.inner_heading_row_border = False
         return table.table
 
