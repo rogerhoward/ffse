@@ -144,13 +144,13 @@ class Encoder(object):
         """
         table_data = [
             [clrz('source', 'cyan'), clrz(self.original, 'white')],
+            # [clrz('source', 'cyan'), click.style(self.original, fg='green', blink=True, bold=True)],
             [clrz('output', 'cyan'), clrz(self.output, 'white')],
             [clrz('preset', 'cyan'), clrz(self.preset_name, 'magenta')],
             [clrz('duration', 'cyan'), clrz(str(self.duration), 'red')],
             [clrz('framerate', 'cyan'), clrz(str(self.frame_rate), 'red')],
             [clrz('frames', 'cyan'), clrz(str(int(self.duration * self.frame_rate)), 'red')],
         ]
-
 
         table = AsciiTable(table_data, clrz(' FFSE - the FFS Encoder ', 'yellow'))
         table.inner_heading_row_border = False
