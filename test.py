@@ -2,6 +2,7 @@
 import re
 import click
 import subprocess
+from sh import ffmpeg
 
 from pathlib import Path
 from terminaltables import AsciiTable
@@ -20,6 +21,26 @@ class Encoder(object):
         Actually runs the encoder.
         Currently uses Subprocess synchronously, but may switch to sh and Celery.
         """
+        print(self.command)
+        process = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+        for line in process.stdout:
+            line = line.strip()
+
+            if line.startswith('frame='):
+                try:
+                    self.frame = int(re.match(r'frame=\s*(\d+)', line).group(1))
+                except:
+                    pass
+
+            self.progress()
+
+    def convertsh(self):
+        """
+        Actually runs the encoder.
+        Currently uses Subprocess synchronously, but may switch to sh and Celery.
+        """
+
+
         process = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
         for line in process.stdout:
             line = line.strip()
@@ -190,6 +211,8 @@ def handle(dir, preset, file):
     # Initialize ProgressBar as an instance attribute of this_encoder
     with ProgressBar(max_value=this_encoder.frames, widgets=widgets) as this_encoder.progressbar:
         this_encoder.convert()
+
+    print(self.command)
 
 
 if __name__ == '__main__':
